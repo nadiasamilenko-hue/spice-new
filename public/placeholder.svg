@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="500" height="500" fill="#efe8dd"/>
+  <g fill="none" stroke="#b8a685" stroke-width="2">
+    <circle cx="250" cy="220" r="70"/>
+    <path d="M150 360 Q250 280 350 360" stroke-linecap="round"/>
+  </g>
+  <text x="250" y="430" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#8a7a5c" font-style="italic">Spice Market</text>
+</svg>
