@@ -5,16 +5,20 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "Про бренд — Spice Market" },
-      { name: "description", content: "Spice Market — український бренд преміальних спецій для щоденної кухні." },
+      {
+        name: "description",
+        content: "Spice Market — український бренд преміальних спецій для щоденної кухні.",
+      },
       { property: "og:title", content: "Про бренд — Spice Market" },
-      { property: "og:description", content: "Spice Market — український бренд преміальних спецій." },
+      {
+        property: "og:description",
+        content: "Spice Market — український бренд преміальних спецій.",
+      },
       { property: "og:url", content: "/about" },
       { property: "og:image", content: heroImg },
       { name: "twitter:image", content: heroImg },
     ],
-    links: [
-      { rel: "canonical", href: "/about" },
-    ],
+    links: [{ rel: "canonical", href: "/about" }],
   }),
   component: AboutPage,
 });
@@ -27,8 +31,8 @@ function AboutPage() {
           <p className="text-xs uppercase tracking-[0.25em] text-accent">Про бренд</p>
           <h1 className="mt-3 text-5xl">Спеції — це досвід, не приправа.</h1>
           <p className="mt-6 text-foreground/75 leading-relaxed">
-            Spice Market народився з простої ідеї: кожна вечеря заслуговує на справжній аромат.
-            Ми привозимо чисті спеції напряму від фермерів, складаємо авторські суміші разом із шефами
+            Spice Market народився з простої ідеї: кожна вечеря заслуговує на справжній аромат. Ми
+            привозимо чисті спеції напряму від фермерів, складаємо авторські суміші разом із шефами
             та купажуємо чаї для тих моментів, коли хочеться просто видихнути.
           </p>
           <div className="mt-10 grid grid-cols-3 gap-6 border-t border-border pt-8">
@@ -44,9 +48,18 @@ function AboutPage() {
       <section className="bg-secondary/40 py-20">
         <div className="container mx-auto grid gap-8 px-4 md:grid-cols-3">
           {[
-            { t: "Чесне походження", d: "Знаємо кожного фермера за іменем. Без посередників і безіменних мішків." },
-            { t: "Свіже пакування", d: "Молемо й пакуємо невеликими партіями — аромат не встигає зів'янути." },
-            { t: "Без зайвого", d: "Без барвників, підсилювачів і солі. Тільки те, що написано на банці." },
+            {
+              t: "Чесне походження",
+              d: "Знаємо кожного фермера за іменем. Без посередників і безіменних мішків.",
+            },
+            {
+              t: "Свіже пакування",
+              d: "Молемо й пакуємо невеликими партіями — аромат не встигає зів'янути.",
+            },
+            {
+              t: "Без зайвого",
+              d: "Без барвників, підсилювачів і солі. Тільки те, що написано на банці.",
+            },
           ].map((x) => (
             <div key={x.t} className="rounded-sm bg-card p-6 border border-border">
               <h3 className="text-xl font-serif">{x.t}</h3>

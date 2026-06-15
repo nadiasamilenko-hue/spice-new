@@ -7,10 +7,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/order/$orderNumber")({
   head: () => ({
-    meta: [
-      { title: "Замовлення прийнято — Spice Market" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Замовлення прийнято — Spice Market" }, { name: "robots", content: "noindex" }],
   }),
   component: OrderConfirmation,
 });
@@ -29,7 +26,9 @@ function OrderConfirmation() {
     try {
       const raw = localStorage.getItem("sm.lastOrder.v1");
       if (raw) setSaved(JSON.parse(raw));
-    } catch {}
+    } catch {
+      // Ignore unavailable or invalid last-order storage.
+    }
   }, []);
 
   const items = useMemo(() => (saved ? cartToOrderItems(saved.lines) : []), [saved]);
@@ -41,7 +40,8 @@ function OrderConfirmation() {
       ``,
       `Товари:`,
       ...items.map(
-        (i) => `· ${i.name}${i.packLabel ? " — " + i.packLabel : ""}${i.weight ? " (" + i.weight + ")" : ""} ×${i.qty} = ${i.lineTotal} ₴`
+        (i) =>
+          `· ${i.name}${i.packLabel ? " — " + i.packLabel : ""}${i.weight ? " (" + i.weight + ")" : ""} ×${i.qty} = ${i.lineTotal} ₴`,
       ),
       ``,
       `Разом за товари: ${total} ₴`,
@@ -49,7 +49,7 @@ function OrderConfirmation() {
     ].join("\n");
     navigator.clipboard.writeText(lines).then(
       () => toast.success("Деталі скопійовано"),
-      () => toast.error("Не вдалося скопіювати")
+      () => toast.error("Не вдалося скопіювати"),
     );
   }
 
@@ -57,7 +57,15 @@ function OrderConfirmation() {
     if (!saved) return;
     cart.clear();
     saved.lines.forEach((l) =>
-      cart.add({ slug: l.slug, name: l.name, image: l.image, price: l.price, weight: l.weight, packLabel: l.packLabel, qty: l.qty })
+      cart.add({
+        slug: l.slug,
+        name: l.name,
+        image: l.image,
+        price: l.price,
+        weight: l.weight,
+        packLabel: l.packLabel,
+        qty: l.qty,
+      }),
     );
     toast.success("Товари знову у кошику");
   }
@@ -96,7 +104,8 @@ function OrderConfirmation() {
             ))}
           </ul>
           <div className="mt-4 border-t border-border pt-4 flex justify-between font-serif text-xl">
-            <span>Разом за товари</span><span>{total} ₴</span>
+            <span>Разом за товари</span>
+            <span>{total} ₴</span>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Доставка оплачується окремо при отриманні посилки.
@@ -120,7 +129,10 @@ function OrderConfirmation() {
       )}
 
       <div className="mt-10 text-center">
-        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-accent hover:underline">
+        <Link
+          to="/shop"
+          className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
+        >
           Продовжити покупки <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

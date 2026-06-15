@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export interface CartLine {
-  id: string;       // slug
+  id: string; // slug
   slug: string;
   name: string;
   image: string;
@@ -32,7 +32,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setLines(JSON.parse(raw));
-    } catch {}
+    } catch {
+      // Ignore unavailable or invalid local cart storage.
+    }
     setHydrated(true);
   }, []);
 
@@ -45,18 +47,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       lines,
       add: ({ slug, name, image, price, weight, packLabel, qty = 1 }) => {
         setLines((prev) => {
-          const existing = prev.find((l) => l.id === slug);
-          if (existing) return prev.map((l) => (l.id === slug ? { ...l, qty: l.qty + qty } : l));
-          return [...prev, { id: slug, slug, name, image, price, weight, packLabel, qty }];
+          const id = `${slug}::${weight ?? ""}`;
+          const existing = prev.find((l) => l.id === id);
+          if (existing) return prev.map((l) => (l.id === id ? { ...l, qty: l.qty + qty } : l));
+          return [...prev, { id, slug, name, image, price, weight, packLabel, qty }];
         });
       },
-      setQty: (id, qty) => setLines((prev) => prev.map((l) => (l.id === id ? { ...l, qty: Math.max(1, qty) } : l))),
+      setQty: (id, qty) =>
+        setLines((prev) => prev.map((l) => (l.id === id ? { ...l, qty: Math.max(1, qty) } : l))),
       remove: (id) => setLines((prev) => prev.filter((l) => l.id !== id)),
       clear: () => setLines([]),
       totalItems: lines.reduce((s, l) => s + l.qty, 0),
       subtotal: lines.reduce((s, l) => s + l.price * l.qty, 0),
     }),
-    [lines]
+    [lines],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -7,7 +7,11 @@ export function Footer() {
       <div className="container mx-auto grid gap-10 px-4 py-14 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <img src={logo.url} alt="Spice Market" className="h-10 w-10 rounded-full object-cover" />
+            <img
+              src={logo.url}
+              alt="Spice Market"
+              className="h-10 w-10 rounded-full object-cover"
+            />
             <span className="font-serif text-xl">Spice Market</span>
           </div>
           <p className="mt-4 text-sm text-primary-foreground/75 max-w-xs">
@@ -18,11 +22,29 @@ export function Footer() {
         <div>
           <h4 className="text-sm font-medium tracking-wider uppercase mb-4">Магазин</h4>
           <ul className="space-y-2 text-sm text-primary-foreground/75">
-            <li><Link to="/shop">Усі товари</Link></li>
-            <li><Link to="/shop" search={{ cat: "clean" } as never}>Чисті спеції</Link></li>
-            <li><Link to="/shop" search={{ cat: "blend" } as never}>Суміші</Link></li>
-            <li><Link to="/shop" search={{ cat: "tea" } as never}>Чаї</Link></li>
-            <li><Link to="/shop" search={{ cat: "gift" } as never}>Подарунки</Link></li>
+            <li>
+              <Link to="/shop">Усі товари</Link>
+            </li>
+            <li>
+              <Link to="/shop" search={{ cat: "clean" } as never}>
+                Чисті спеції
+              </Link>
+            </li>
+            <li>
+              <Link to="/shop" search={{ cat: "blend" } as never}>
+                Суміші
+              </Link>
+            </li>
+            <li>
+              <Link to="/shop" search={{ cat: "tea" } as never}>
+                Чаї
+              </Link>
+            </li>
+            <li>
+              <Link to="/shop" search={{ cat: "author" } as never}>
+                Авторські суміші
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -32,7 +54,9 @@ export function Footer() {
             <li>Доставка та оплата</li>
             <li>Повернення</li>
             <li>FAQ</li>
-            <li><Link to="/contact">Контакти</Link></li>
+            <li>
+              <Link to="/contact">Контакти</Link>
+            </li>
           </ul>
         </div>
 

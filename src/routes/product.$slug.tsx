@@ -5,6 +5,8 @@ import { useCart } from "@/lib/cart";
 import { ProductCard } from "@/components/ProductCard";
 import { ShoppingBag, Heart } from "lucide-react";
 import { useFavorites } from "@/lib/favorites";
+import { isDoyPak, parseSizes } from "@/lib/pack-sizes";
+import { useState } from "react";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
@@ -15,22 +17,59 @@ export const Route = createFileRoute("/product/$slug")({
       .slice(0, 4);
     return { product, related };
   },
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.product.name} — Spice Market` },
-          { name: "description", content: loaderData.product.description.slice(0, 160) },
-          { property: "og:title", content: loaderData.product.name },
-          { property: "og:image", content: loaderData.product.image },
-          { property: "og:type", content: "product" },
-        ]
-      : [],
-    links: loaderData ? [{ rel: "canonical", href: `/product/${loaderData.product.slug}` }] : [],
-  }),
+  head: ({ loaderData }) => {
+    const siteUrl = import.meta.env.VITE_SITE_URL ?? "";
+    return {
+      meta: loaderData
+        ? [
+            { title: `${loaderData.product.name} — Spice Market` },
+            { name: "description", content: loaderData.product.description.slice(0, 160) },
+            { property: "og:title", content: loaderData.product.name },
+            {
+              property: "og:image",
+              content: loaderData.product.image.startsWith("http")
+                ? loaderData.product.image
+                : `${siteUrl}${loaderData.product.image}`,
+            },
+            { property: "og:url", content: `${siteUrl}/product/${loaderData.product.slug}` },
+            { property: "og:type", content: "product" },
+          ]
+        : [],
+      links: loaderData ? [{ rel: "canonical", href: `/product/${loaderData.product.slug}` }] : [],
+      scripts: loaderData
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Product",
+                name: loaderData.product.name,
+                image: loaderData.product.image.startsWith("http")
+                  ? loaderData.product.image
+                  : `${siteUrl}${loaderData.product.image}`,
+                description: loaderData.product.description,
+                url: `${siteUrl}/product/${loaderData.product.slug}`,
+                offers: {
+                  "@type": "Offer",
+                  price: String(loaderData.product.price),
+                  priceCurrency: "UAH",
+                  availability:
+                    loaderData.product.stockStatus === "out_of_stock"
+                      ? "https://schema.org/OutOfStock"
+                      : "https://schema.org/InStock",
+                },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   notFoundComponent: () => (
     <div className="container mx-auto px-4 py-24 text-center">
       <h1 className="text-3xl">Товар не знайдено</h1>
-      <Link to="/shop" className="mt-6 inline-block text-accent underline">До каталогу</Link>
+      <Link to="/shop" className="mt-6 inline-block text-accent underline">
+        До каталогу
+      </Link>
     </div>
   ),
   errorComponent: ({ error }) => (
@@ -47,13 +86,22 @@ function ProductPage() {
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(product.slug);
   const outOfStock = product.stockStatus === "out_of_stock";
+  const doyPak = isDoyPak(product.packLabel);
+  const sizes = doyPak ? parseSizes(product.weight) : [];
+  const hasSizes = sizes.length > 1;
+  const [size, setSize] = useState<string>(sizes[0] ?? "");
 
   return (
     <div>
       <div className="container mx-auto px-4 py-6 text-xs text-muted-foreground">
-        <Link to="/" className="hover:text-accent">Головна</Link> /{" "}
-        <Link to="/shop" className="hover:text-accent">Магазин</Link> /{" "}
-        <span className="text-foreground/80">{product.name}</span>
+        <Link to="/" className="hover:text-accent">
+          Головна
+        </Link>{" "}
+        /{" "}
+        <Link to="/shop" className="hover:text-accent">
+          Магазин
+        </Link>{" "}
+        / <span className="text-foreground/80">{product.name}</span>
       </div>
 
       <section className="container mx-auto grid gap-10 px-4 pb-16 lg:grid-cols-2">
@@ -76,7 +124,9 @@ function ProductPage() {
 
         <div>
           {product.categoryTitle && (
-            <p className="text-xs uppercase tracking-[0.25em] text-accent">{product.categoryTitle}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-accent">
+              {product.categoryTitle}
+            </p>
           )}
           <h1 className="mt-2 text-4xl md:text-5xl">{product.name}</h1>
           {product.description && (
@@ -92,10 +142,40 @@ function ProductPage() {
                 </div>
               </div>
               <div className="text-xs text-muted-foreground text-right">
-                {outOfStock ? "Немає в наявності" : product.stockStatus === "low_stock" ? "Залишилось мало" : "В наявності"}
+                {outOfStock
+                  ? "Немає в наявності"
+                  : product.stockStatus === "low_stock"
+                    ? "Залишилось мало"
+                    : "В наявності"}
               </div>
             </div>
             <div className="mt-5 flex gap-2">
+              {hasSizes && (
+                <div className="w-full">
+                  <div className="mb-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                    Оберіть розмір
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setSize(s)}
+                        className={`rounded-sm border px-3 py-2 text-xs transition ${
+                          s === size
+                            ? "border-accent bg-accent/10"
+                            : "border-border hover:border-accent"
+                        }`}
+                        aria-pressed={s === size}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex gap-2">
               <button
                 disabled={outOfStock}
                 onClick={() =>
@@ -104,7 +184,7 @@ function ProductPage() {
                     name: product.name,
                     image: product.image,
                     price: product.price,
-                    weight: product.weight,
+                    weight: hasSizes ? size : product.weight,
                     packLabel: product.packLabel,
                   })
                 }
@@ -130,7 +210,9 @@ function ProductPage() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl mb-8">Часто беруть разом</h2>
             <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-              {related.map((p: Product) => <ProductCard key={p.slug} product={p} />)}
+              {related.map((p: Product) => (
+                <ProductCard key={p.slug} product={p} />
+              ))}
             </div>
           </div>
         </section>

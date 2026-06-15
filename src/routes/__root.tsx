@@ -82,9 +82,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Spice Market — Преміальні спеції для щоденної кухні" },
-      { name: "description", content: "Чисті спеції, авторські суміші та чаї у скляних, дой-пак та зручних пластикових пакуваннях. Швидка доставка по Україні." },
+      {
+        name: "description",
+        content:
+          "Чисті спеції, авторські суміші та чаї у скляних, дой-пак та зручних пластикових пакуваннях. Швидка доставка по Україні.",
+      },
       { property: "og:title", content: "Spice Market — Преміальні спеції" },
-      { property: "og:description", content: "Чисті спеції, суміші, чаї та подарункові набори. Аромати, які роблять страву." },
+      {
+        property: "og:description",
+        content: "Чисті спеції, суміші, чаї та подарункові набори. Аромати, які роблять страву.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Spice Market" },
       { property: "og:locale", content: "uk_UA" },
@@ -100,7 +107,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap",
+      },
     ],
     scripts: [
       {

@@ -4,7 +4,7 @@ import purposeBbq from "@/assets/purpose-bbq.jpg";
 import purposeBaking from "@/assets/purpose-baking.jpg";
 import purposeTea from "@/assets/purpose-tea.jpg";
 
-export type Category = "clean" | "blend" | "tea" | "gift" | "other";
+export type Category = "clean" | "blend" | "author" | "tea" | "gift" | "other";
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export interface Product {
@@ -34,9 +34,9 @@ export interface CategoryInfo {
 
 export const categories: CategoryInfo[] = [
   { id: "clean", title: "Чисті спеції", subtitle: "Один компонент. Чистий смак." },
-  { id: "blend", title: "Суміші", subtitle: "Авторські купажі від шефа." },
+  { id: "blend", title: "Суміші", subtitle: "Перевірена класика для щодня." },
+  { id: "author", title: "Авторські суміші", subtitle: "Фірмові купажі від шефа." },
   { id: "tea", title: "Чаї", subtitle: "Купажі для ритуалу." },
-  { id: "gift", title: "Подарункові набори", subtitle: "Готові подарунки в дерев'яних коробках." },
 ];
 
 export const purposes = [

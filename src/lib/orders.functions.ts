@@ -69,7 +69,10 @@ export const placeOrder = createServerFn({ method: "POST" })
 
     // 2) lookup products by slug → ids
     const slugs = data.items.map((i) => i.slug);
-    const { data: prods } = await supabaseAdmin.from("products").select("id, slug").in("slug", slugs);
+    const { data: prods } = await supabaseAdmin
+      .from("products")
+      .select("id, slug")
+      .in("slug", slugs);
     const idBySlug = new Map((prods ?? []).map((p) => [p.slug as string, p.id as string]));
 
     // 3) insert order_items
@@ -95,21 +98,23 @@ export const placeOrder = createServerFn({ method: "POST" })
     }
 
     // 5) upsert customer
-    await supabaseAdmin
-      .from("customers")
-      .upsert(
-        {
-          name: data.customer.name,
-          phone: data.customer.phone,
-          email: data.customer.email || null,
-          preferred_contact: data.customer.preferredContact,
-          last_order_at: new Date().toISOString(),
-        },
-        { onConflict: "phone" }
-      );
-    await supabaseAdmin.rpc as any; // (no-op)
+    await supabaseAdmin.from("customers").upsert(
+      {
+        name: data.customer.name,
+        phone: data.customer.phone,
+        email: data.customer.email || null,
+        preferred_contact: data.customer.preferredContact,
+        last_order_at: new Date().toISOString(),
+      },
+      { onConflict: "phone" },
+    );
+    // (no-op)
     // increment stats
-    const { data: cust } = await supabaseAdmin.from("customers").select("id, total_orders, total_spent").eq("phone", data.customer.phone).maybeSingle();
+    const { data: cust } = await supabaseAdmin
+      .from("customers")
+      .select("id, total_orders, total_spent")
+      .eq("phone", data.customer.phone)
+      .maybeSingle();
     if (cust) {
       await supabaseAdmin
         .from("customers")

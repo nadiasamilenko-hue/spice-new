@@ -2,7 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { getAdminProduct, updateAdminProduct, uploadProductImage } from "@/lib/admin.functions";
+import {
+  getAdminProduct,
+  updateAdminProduct,
+  uploadProductImage,
+  listAdminCategories,
+  listProductImages,
+  addProductImage,
+  setPrimaryProductImage,
+  deleteProductImage,
+} from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/products/$id")({
   component: AdminProductEdit,
@@ -12,10 +21,21 @@ function AdminProductEdit() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "product", id],
     queryFn: () => getAdminProduct({ data: { id } }),
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["admin", "categories"],
+    queryFn: () => listAdminCategories(),
+  });
+
+  const { data: gallery } = useQuery({
+    queryKey: ["admin", "product-images", id],
+    queryFn: () => listProductImages({ data: { productId: id } }),
   });
 
   const [name, setName] = useState("");
@@ -25,25 +45,94 @@ function AdminProductEdit() {
   const [visible, setVisible] = useState(true);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [slug, setSlug] = useState("");
+  const [weight, setWeight] = useState("");
+  const [ingredients, setIngredients] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [packLabel, setPackLabel] = useState<string>("");
+
+  const formats = [
+    {
+      value: "скляна баночка з деревʼяною кришкою (скло)",
+      label: "скляна баночка з деревʼяною кришкою (скло)",
+    },
+    { value: "дой пак L-XL", label: "дой пак L-XL" },
+    { value: "пластикова баночка", label: "пластикова баночка" },
+  ];
+
+  type EditableProduct = NonNullable<typeof data> & {
+    pack_label?: string | null;
+    ingredients?: string | null;
+    seo_title?: string | null;
+    seo_description?: string | null;
+  };
 
   useEffect(() => {
     if (!data) return;
+    const product = data as EditableProduct;
     setName(data.name);
     setDescription(data.description ?? "");
     setPrice(Number(data.price ?? 0));
     setQuantity(Number(data.quantity ?? 0));
     setVisible(!!data.visible);
     setImageUrl(data.image_url ?? null);
+    setSlug(data.slug ?? "");
+    setWeight(data.weight ?? "");
+    setPackLabel(product.pack_label ?? "");
+    setIngredients(product.ingredients ?? "");
+    setSeoTitle(product.seo_title ?? "");
+    setSeoDescription(product.seo_description ?? "");
+    setCategoryId(data.category_id ?? "");
   }, [data]);
 
   const save = useMutation({
     mutationFn: () =>
       updateAdminProduct({
-        data: { id, name, description, price, quantity, visible, image_url: imageUrl },
+        data: {
+          id,
+          name,
+          description,
+          price,
+          quantity,
+          visible,
+          image_url: imageUrl,
+          slug: slug || undefined,
+          weight: weight || null,
+          pack_label: packLabel || null,
+          ingredients: ingredients || null,
+          seo_title: seoTitle || null,
+          seo_description: seoDescription || null,
+          category_id: categoryId || null,
+        },
       }),
     onSuccess: () => {
       toast.success("Збережено");
       qc.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const setPrimary = useMutation({
+    mutationFn: (imageId: string) => setPrimaryProductImage({ data: { productId: id, imageId } }),
+    onSuccess: () => {
+      toast.success("Головне фото оновлено");
+      qc.invalidateQueries({ queryKey: ["admin", "product-images", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "product", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "products"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteImg = useMutation({
+    mutationFn: (imageId: string) => deleteProductImage({ data: { productId: id, imageId } }),
+    onSuccess: () => {
+      toast.success("Видалено");
+      qc.invalidateQueries({ queryKey: ["admin", "product-images", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "product", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "products"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -80,9 +169,43 @@ function AdminProductEdit() {
   if (isLoading) return <p className="text-muted-foreground">Завантаження…</p>;
   if (error) return <p className="text-destructive">{(error as Error).message}</p>;
 
+  async function onPickGallery(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setGalleryUploading(true);
+    try {
+      for (const file of files) {
+        if (!/^image\/(jpeg|png|webp|gif|avif)$/.test(file.type)) {
+          toast.error(`${file.name}: лише JPG, PNG, WEBP, AVIF, GIF`);
+          continue;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name}: понад 5MB`);
+          continue;
+        }
+        const dataBase64 = await fileToBase64(file);
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        await addProductImage({
+          data: { productId: id, filename: safeName, contentType: file.type, dataBase64 },
+        });
+      }
+      toast.success("Завантажено");
+      qc.invalidateQueries({ queryKey: ["admin", "product-images", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "product", id] });
+      qc.invalidateQueries({ queryKey: ["admin", "products"] });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setGalleryUploading(false);
+      if (galleryRef.current) galleryRef.current.value = "";
+    }
+  }
+
   return (
     <div className="max-w-3xl">
-      <Link to="/admin" className="text-xs text-muted-foreground hover:text-accent">← Назад до товарів</Link>
+      <Link to="/admin" className="text-xs text-muted-foreground hover:text-accent">
+        ← Назад до товарів
+      </Link>
       <h2 className="mt-2 text-2xl mb-6">Редагувати товар</h2>
 
       <div className="grid gap-8 md:grid-cols-[260px_1fr]">
@@ -122,26 +245,126 @@ function AdminProductEdit() {
               Видалити фото
             </button>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">JPG/PNG/WEBP до 5MB. Квадратний формат.</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            JPG/PNG/WEBP до 5MB. Квадратний формат.
+          </p>
         </div>
 
         <div className="space-y-4">
           <Field label="Назва">
             <input value={name} onChange={(e) => setName(e.target.value)} className="input" />
           </Field>
+          <Field label="Slug (URL)">
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              className="input"
+              placeholder="napriklad-chornyj-perec"
+            />
+          </Field>
+          <Field label="Категорія">
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="input"
+            >
+              <option value="">— без категорії —</option>
+              {categories?.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="Опис">
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6} className="input" />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={6}
+              className="input"
+            />
+          </Field>
+          <Field label="Вага / фасування">
+            <input
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="input"
+              placeholder="напр. 50 г"
+            />
+          </Field>
+          <Field label="Формат упаковки">
+            <select
+              value={packLabel}
+              onChange={(e) => setPackLabel(e.target.value)}
+              className="input"
+            >
+              <option value="">— оберіть формат —</option>
+              {formats.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Склад (для сумішей)">
+            <textarea
+              value={ingredients}
+              onChange={(e) => setIngredients(e.target.value)}
+              rows={3}
+              className="input"
+              placeholder="чорний перець, кмин, коріандр…"
+            />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Ціна, ₴">
-              <input type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="input" />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className="input"
+              />
             </Field>
             <Field label="Залишок">
-              <input type="number" min={0} step="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="input" />
+              <input
+                type="number"
+                min={0}
+                step="1"
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                className="input"
+              />
             </Field>
           </div>
+
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">SEO</div>
+            <Field label="SEO заголовок">
+              <input
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                maxLength={255}
+                className="input"
+              />
+            </Field>
+            <Field label="SEO опис">
+              <textarea
+                value={seoDescription}
+                onChange={(e) => setSeoDescription(e.target.value)}
+                rows={2}
+                maxLength={500}
+                className="input"
+              />
+            </Field>
+          </div>
+
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={visible}
+              onChange={(e) => setVisible(e.target.checked)}
+            />
             <span className="text-sm">Видимий у каталозі</span>
           </label>
 
@@ -154,6 +377,74 @@ function AdminProductEdit() {
             {save.isPending ? "Збереження…" : "Зберегти"}
           </button>
         </div>
+      </div>
+
+      <div className="mt-10 border-t border-border pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg">Галерея фото</h3>
+          <input
+            ref={galleryRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+            onChange={onPickGallery}
+            className="hidden"
+          />
+          <button
+            type="button"
+            disabled={galleryUploading}
+            onClick={() => galleryRef.current?.click()}
+            className="rounded-sm border border-border px-4 py-2 text-sm hover:border-accent disabled:opacity-50"
+          >
+            {galleryUploading ? "Завантаження…" : "Додати фото"}
+          </button>
+        </div>
+        {!gallery?.length ? (
+          <p className="text-sm text-muted-foreground">Ще немає додаткових фото.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {gallery.map((img) => (
+              <div
+                key={img.id}
+                className={`group relative overflow-hidden rounded-sm border ${
+                  img.is_primary ? "border-accent" : "border-border"
+                }`}
+              >
+                <div className="aspect-square bg-secondary">
+                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                </div>
+                {img.is_primary && (
+                  <span className="absolute left-2 top-2 rounded-sm bg-accent px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
+                    Головне
+                  </span>
+                )}
+                <div className="flex gap-1 border-t border-border bg-background p-1">
+                  <button
+                    type="button"
+                    disabled={img.is_primary || setPrimary.isPending}
+                    onClick={() => setPrimary.mutate(img.id)}
+                    className="flex-1 rounded-sm px-2 py-1 text-xs hover:bg-secondary disabled:opacity-40"
+                  >
+                    Зробити головним
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteImg.isPending}
+                    onClick={() => {
+                      if (confirm("Видалити фото?")) deleteImg.mutate(img.id);
+                    }}
+                    className="rounded-sm px-2 py-1 text-xs text-destructive hover:bg-secondary disabled:opacity-40"
+                  >
+                    Видалити
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          JPG/PNG/WEBP до 5MB кожне. Можна вибрати декілька файлів одночасно.
+        </p>
       </div>
 
       <style>{`.input{width:100%;border:1px solid hsl(var(--border));background:hsl(var(--background));padding:.6rem .75rem;border-radius:2px;font-size:.875rem;margin-top:.25rem}`}</style>

@@ -64,22 +64,22 @@
 :root {
   --radius: 0.25rem;
   /* Spice Market — dark premium palette */
-  --background: oklch(0.14 0.008 60);           /* near-black warm */
-  --foreground: oklch(0.96 0.012 80);           /* warm cream text */
+  --background: oklch(0.14 0.008 60); /* near-black warm */
+  --foreground: oklch(0.96 0.012 80); /* warm cream text */
   --card: oklch(0.18 0.012 60);
   --card-foreground: oklch(0.96 0.012 80);
   --popover: oklch(0.18 0.012 60);
   --popover-foreground: oklch(0.96 0.012 80);
-  --primary: oklch(0.72 0.16 55);               /* warm paprika */
+  --primary: oklch(0.72 0.16 55); /* warm paprika */
   --primary-foreground: oklch(0.14 0.008 60);
-  --secondary: oklch(0.22 0.015 60);            /* dark sand */
+  --secondary: oklch(0.22 0.015 60); /* dark sand */
   --secondary-foreground: oklch(0.92 0.015 75);
   --muted: oklch(0.22 0.012 60);
-  --muted-foreground: oklch(0.70 0.02 70);
-  --accent: oklch(0.72 0.16 55);                /* warm paprika accent */
+  --muted-foreground: oklch(0.7 0.02 70);
+  --accent: oklch(0.72 0.16 55); /* warm paprika accent */
   --accent-foreground: oklch(0.14 0.008 60);
   --olive: oklch(0.65 0.09 120);
-  --destructive: oklch(0.60 0.20 27);
+  --destructive: oklch(0.6 0.2 27);
   --destructive-foreground: oklch(0.96 0.012 80);
   --border: oklch(0.28 0.012 60);
   --input: oklch(0.28 0.012 60);
@@ -142,12 +142,15 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: 'Inter', system-ui, sans-serif;
-    font-feature-settings: 'ss01', 'cv11';
+    font-family: "Inter", system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
   }
 
-  h1, h2, h3, h4 {
-    font-family: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Fraunces", "Cormorant Garamond", Georgia, serif;
     font-weight: 500;
     letter-spacing: -0.01em;
   }

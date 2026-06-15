@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 .output
+
+# Local env (contains secrets — never commit; use .env.example as template)
+.env
+.env.*
+!.env.example
 .vinxi
 .tanstack/**
 .nitro
