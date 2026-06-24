@@ -1,3 +1,5 @@
 {
-  "framework": "tanstack-start"
+  "buildCommand": "npx vite build",
+  "outputDirectory": ".vercel/output",
+  "framework": null
 }
